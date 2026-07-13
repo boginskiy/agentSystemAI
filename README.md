@@ -1,2 +1,84 @@
 # agentSystemAI
 Multi-agent AI system
+
+
+# History
+https://developers.sber.ru/studio/workspaces/019f3cd8-955b-7b37-9a9c-796d611c8383/gigachat-api/projects/019f3cdb-bc7c-78d0-a4e5-6569b9153993/parameters
+https://developers.sber.ru/docs/ru/gigachat/api/request-collections#postman
+
+
+# Process
+
+
+## Подготовка инфраструктуры для тестирования SQL скриптов
+
+1) Загрузка csv данных. Читаем поля, создаем идентичные таблицы на Postgres. Обогащение данными.
+2) Postgres поднимаем в контейнере. После завершения тестирования уничтожаем. 
+
+
+## Загрузка файла 
+
+1) Считываем файл, который будем тестировать. Ловим ошибки, Вывод ошибок. Далее корректировка файла и повторный перезапуск. Делаем так до тех пор пока скрипт не заработает
+
+
+your-ai-agent/
+├── cmd/
+│   └── agent/
+│       └── main.go                 # Точка входа, инициализация DI
+├── internal/
+│   ├── agent/                      # Ядро бизнес-логики
+│   │   ├── core/
+│   │   │   ├── agent.go           # Интерфейс агента
+│   │   │   ├── conversation.go    # Управление диалогом
+│   │   │   └── tool.go            # Интерфейс инструментов
+│   │   ├── executor/
+│   │   │   ├── reAct.go          # ReAct стратегия выполнения
+│   │   │   └── chain.go          # Chain-of-thought
+│   │   └── memory/
+│   │       ├── short_term.go     # Векторная память (встраивания)
+│   │       └── long_term.go      # SQLite/Postgres для истории
+│   ├── llm/                       # Адаптеры для AI моделей
+│   │   ├── provider/
+│   │   │   ├── interface.go      # Общий интерфейс
+│   │   │   ├── openai.go
+│   │   │   ├── anthropic.go
+│   │   │   └── ollama.go         # Локальные модели
+│   │   └── streaming/
+│   │       └── handler.go        # Обработка стриминга
+│   ├── tools/                     # Инструменты агента
+│   │   ├── builtin/
+│   │   │   ├── web_search.go
+│   │   │   ├── calculator.go
+│   │   │   └── file_operations.go
+│   │   └── registry/
+│   │       └── registry.go       # Реестр инструментов
+│   ├── cli/                       # CLI слой (интерфейсы)
+│   │   ├── command/
+│   │   │   ├── root.go
+│   │   │   ├── chat.go
+│   │   │   └── config.go
+│   │   ├── output/
+│   │   │   ├── formatter.go      # Форматирование вывода
+│   │   │   └── color.go          # TTY цвета
+│   │   └── input/
+│   │       ├── reader.go         # Чтение stdin
+│   │       └── completer.go      # Автодополнение (readline)
+│   ├── config/                    # Конфигурация
+│   │   ├── loader.go             # Загрузка из YAML/ENV
+│   │   └── validator.go
+│   └── storage/                   # Персистентность
+│       ├── repository/
+│       │   ├── conversation.go
+│       │   └── settings.go
+│       └── migrations/            # SQL миграции
+├── pkg/                           # Публичные утилиты (можно вынести)
+│   ├── logger/                    # Структурированный логгинг
+│   ├── retry/                     # Экспоненциальные ретраи
+│   └── validator/                 # Валидация
+├── configs/
+│   ├── config.yaml               # Дефолтная конфигурация
+│   └── config.example.yaml
+├── go.mod
+├── go.sum
+├── Makefile                      # Автоматизация сборки
+└── README.md

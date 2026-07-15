@@ -6,13 +6,10 @@ import (
 )
 
 type Output struct {
-	Formatter Format
 }
 
-func NewOutput(format Format) *Output {
-	return &Output{
-		Formatter: format,
-	}
+func NewOutput() *Output {
+	return &Output{}
 }
 
 func (o *Output) Print(mess string) (int, error) {

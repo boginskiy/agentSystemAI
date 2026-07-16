@@ -19,7 +19,7 @@ func (f *Format) LineMess(mess string) string {
 }
 
 func (f *Format) LineMessWithErr(mess string, err error) string {
-	return fmt.Sprintf("%s Error: %s\n", mess, err.Error())
+	return fmt.Sprintf("%s. Error: %s\n", mess, err.Error())
 }
 
 func (f *Format) WelcomeMess() string {
@@ -31,5 +31,5 @@ func (f *Format) WelcomeMess() string {
 }
 
 func (f *Format) EnterCommand(mess string) string {
-	return fmt.Sprintf("%s:\n", mess)
+	return fmt.Sprintf("%s: ", mess)
 }

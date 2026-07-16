@@ -20,7 +20,21 @@ func NewChat() *Chat {
 func (c *Chat) Processing(command string) error {
 	splitcommand := c.split(command)
 
-	fmt.Println(splitcommand)
+	if len(splitcommand) == 1 && (splitcommand[0] == "" || splitcommand[0] == " ") {
+		return fmt.Errorf("empty input")
+	}
+
+	commandInput := splitcommand[0]
+
+	// Проверка, есть ли введеная команда в списке инструментов.
+	if tool, ok := c.Tools[commandInput]; ok {
+		tool.Do(splitcommand)
+
+		return nil
+	}
+
+	// Команды нет в списке инструментов. Отправляем запрос LLM.
+	fmt.Println("Call LLM")
 
 	return nil
 }

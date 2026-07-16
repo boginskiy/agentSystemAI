@@ -13,11 +13,12 @@ type Root struct {
 	Chatterer cli.Chatterer
 }
 
-func NewRoot(printer cli.Printer, formater cli.Formater, scanner cli.Scanner) *Root {
+func NewRoot(printer cli.Printer, formater cli.Formater, scanner cli.Scanner, chatterer cli.Chatterer) *Root {
 	return &Root{
-		Printer:  printer,
-		Formater: formater,
-		Scanner:  scanner,
+		Printer:   printer,
+		Formater:  formater,
+		Scanner:   scanner,
+		Chatterer: chatterer,
 	}
 }
 

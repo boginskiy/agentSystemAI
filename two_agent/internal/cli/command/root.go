@@ -45,7 +45,7 @@ func (r *Root) Run(ctx context.Context) error {
 				return nil
 			}
 
-			err = r.Chatterer.Processing(command)
+			err = r.Chatterer.Processing(ctx, command)
 			if err != nil {
 				r.Printer.Print(r.Formater.LineMessWithErr("Repeat the command again", err))
 			}

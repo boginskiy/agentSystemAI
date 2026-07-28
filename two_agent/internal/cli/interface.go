@@ -27,5 +27,5 @@ type Commander interface {
 
 type Chatterer interface {
 	AddTool(tool tools.Toolmaker)
-	Processing(command string) error
+	Processing(ctx context.Context, command string) error
 }

@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -17,7 +18,7 @@ func NewChat() *Chat {
 	}
 }
 
-func (c *Chat) Processing(command string) error {
+func (c *Chat) Processing(ctx context.Context, command string) error {
 	splitcommand := c.split(command)
 
 	if len(splitcommand) == 1 && (splitcommand[0] == "" || splitcommand[0] == " ") {
@@ -28,9 +29,7 @@ func (c *Chat) Processing(command string) error {
 
 	// Проверка, есть ли введеная команда в списке инструментов.
 	if tool, ok := c.Tools[commandInput]; ok {
-		tool.Do(splitcommand)
-
-		return nil
+		return tool.Do(ctx, splitcommand)
 	}
 
 	// Команды нет в списке инструментов. Отправляем запрос LLM.

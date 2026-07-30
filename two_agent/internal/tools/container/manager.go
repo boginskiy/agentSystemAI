@@ -1,4 +1,4 @@
-package docker
+package container
 
 import (
 	"context"
@@ -12,12 +12,12 @@ type DockerManager struct {
 }
 
 func NewDockerManager() *DockerManager {
-	dockerCompose := NewDockerFile("docker-compose")
+	dockerCompose := NewDockerFile("docker compose")
 	docker := NewDockerFile("docker")
 
 	return &DockerManager{
 		commands: map[string]Docker{
-			"docker-compose": dockerCompose,
+			"docker compose": dockerCompose,
 			"docker":         docker}, // TODO Команда не валидна.
 	}
 }
@@ -38,7 +38,7 @@ func (d *DockerManager) Up(ctx context.Context, path string) error {
 
 	switch nameFile {
 	case "docker-compose.yml":
-		if d, ok := d.commands["docker-compose"]; ok {
+		if d, ok := d.commands["docker compose"]; ok {
 			err := d.Up(ctx, path)
 			if err != nil {
 				return err
@@ -54,15 +54,3 @@ func (d *DockerManager) Up(ctx context.Context, path string) error {
 	}
 	return nil
 }
-
-// func (d *DockerManager) CheckStatus(ctx context.Context, path string) (string, error) {
-// 	cmd := exec.CommandContext(ctx, d.Name, "ps")
-// 	cmd.Dir = path
-
-// 	output, err := cmd.CombinedOutput()
-// 	if err != nil {
-// 		return "", fmt.Errorf("%s ps failed: %w", d.Name, err)
-// 	}
-
-// 	return string(output), nil
-// }

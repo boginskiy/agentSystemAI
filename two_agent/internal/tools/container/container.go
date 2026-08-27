@@ -5,104 +5,129 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/boginskiy/agentSystemAI/two_agent/internal/cli"
 )
 
-var StorePath = "two_agent/store"
-var FileName = "docker-compose.yml"
-var TimeOut = time.Duration(time.Second * 5)
+//                                   Commands                                      //
+// "/create container: <описание параметров>" || "/create ctr: <описание параметров>"
+// "/status container: <описание параметров>" || "/status ctr: <описание параметров>"
+// "/delete container: <описание параметров>" || "/delete ctr: <описание параметров>"
 
 type Container struct {
-	Command  string
-	Docker   Docker
-	Formater cli.Formater
+	ID            string
+	Command       string
+	DockerManager DockerManager
+	Formater      cli.Formater
 }
 
-func NewContainer(command string, formater cli.Formater) *Container {
-	return &Container{
-		Command:  command,
-		Docker:   NewDockerManager(),
-		Formater: formater,
+func NewContainer(command string, formater cli.Formater) (*Container, error) {
+	cmd, err := os.Getwd()
+	if err != nil {
+		return nil, err
 	}
+
+	dockerManager, err := NewDManager(filepath.Join(cmd, StorePath, FileName))
+	if err != nil {
+		// DockerManager is nill without return error
+		fmt.Println(formater.LineMessWithErr("error creating Docker Manager", err))
+	}
+
+	return &Container{
+		Command:       command,
+		DockerManager: dockerManager,
+		Formater:      formater,
+	}, nil
 }
 
-func (c *Container) CallCommand() string {
+func (c *Container) GetCommand() string {
 	return c.Command
 }
 
 func (c *Container) Do(ctx context.Context, conditions []string) error {
+	if c.DockerManager == nil {
+		return fmt.Errorf("DManager is not created")
+	}
+
+	if len(conditions) == 0 {
+		return fmt.Errorf("there is not command for a start of container")
+	}
+
+	// TODO
 	// Проверка, что есть дополнительные условия в введенной команде
 	// Пример. "/create container: <описание параметров>"
 	if len(conditions) > 1 {
 		_ = conditions[1:] // extraCond
 		c.Formater.LineMess("There is extra conditions with a start of container")
+		return nil
+	}
 
-	} else {
-		// Поступил запрос на испольнение команды без дополнительных условий.
-		// Пример. "/create container
+	// Поступил запрос на исполнение команды без дополнительных условий.
+	// Пример. "/create container" || "/create ctr"
+
+	switch conditions[0] {
+	case "/create container", "/create ctr":
 		return c.createContainer(ctx)
+
+	case "/status container", "/status ctr":
+		return c.statusContainer(ctx)
+
+	case "/delete container", "/delete ctr":
+		return c.deleteContainer(ctx)
 	}
 
 	return nil
 }
 
-// Поженить контейнер! Сделать максимальную абстракцию.
-// Проработать архитектуру.
+// TODO!
+func (c *Container) deleteContainer(ctx context.Context) error {
+	err := c.DockerManager.Down(ctx)
+	if err == nil {
+		c.Formater.LineMess("")
+	}
+}
+
+func (c *Container) statusContainer(ctx context.Context) error {
+	status, err := c.DockerManager.Status(ctx)
+	c.Formater.LineMess(status)
+	return err
+}
 
 func (c *Container) createContainer(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, TimeOut)
 	defer cancel()
 
-	// Проверка наличия Dockerfile файла в папке "store".
-	if isfile := c.checkFile(FileName); isfile {
-		cmd, err := os.Getwd()
-		if err != nil {
+	c.Formater.LineMess("start the docker container...")
+
+	errChan := make(chan error, 1)
+
+	go func(errCh chan error) {
+		defer close(errChan)
+		id, err := c.DockerManager.Up(ctx)
+		c.ID = id // присваиваем внешней переменной
+		errChan <- err
+	}(errChan)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChan:
+		// Контейнер успешно создан
+		if err == nil {
+			fmt.Printf("docker container %s has been created successfully\n", c.ID)
+			return nil
+
+		} else {
+			// Ошибка при сооздании контейнера
+			fmt.Printf("docker container has not been created\n")
 			return err
 		}
-		path := filepath.Join(cmd, StorePath, FileName)
 
-		c.Formater.LineMess("Start the docker container...")
-
-		errChan := make(chan error, 1)
-		go func(errCh chan error) {
-			errChan <- c.Docker.Up(ctx, path)
-			close(errChan)
-		}(errChan)
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case err := <-errChan:
-			if err != nil {
-				// При развертывании контейнера произошла ошибка.
-				// Проверяем был ли при этом создан контейнер.
-
-				return err
-			}
-		}
-
-		return
-		// TODO Делать развертывание контейнера. Обращение к LLM и т.п.
 	}
-
 	// TODO. Пока заглушка и возвращаем ошибку.
 	// Dockerfile отсутствует.
 	// Нужно генерировать через GigaChat API,делать запрос с соответствующим контекстом.
-
-	c.Formater.LineMess("LLM is not connected. Not start container")
-	return fmt.Errorf("error: not start container %s", FileName)
-}
-
-func (c *Container) checkFile(name string) bool {
-	fullPath := filepath.Join(StorePath, name)
-
-	_, err := os.Stat(fullPath)
-	if err != nil {
-		return false
-	}
-	return true
+	// return fmt.Errorf("error: not start container %s", FileName)
 }
 
 // TODO

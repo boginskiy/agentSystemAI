@@ -3,7 +3,7 @@ package tools
 import "context"
 
 type Toolmaker interface {
-	CallCommand() string
+	GetCommand() string
 	Do(ctx context.Context, conditions []string) error
 }
 

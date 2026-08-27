@@ -7,50 +7,69 @@ import (
 	"strings"
 )
 
-type DockerManager struct {
-	commands map[string]Docker
+type DManager struct {
+	Path       string
+	DCommander DockerCommander
 }
 
-func NewDockerManager() *DockerManager {
-	dockerCompose := NewDockerFile("docker compose")
-	docker := NewDockerFile("docker")
-
-	return &DockerManager{
-		commands: map[string]Docker{
-			"docker compose": dockerCompose,
-			"docker":         docker}, // TODO Команда не валидна.
-	}
-}
-
-func (d *DockerManager) Up(ctx context.Context, path string) error {
+// NewDManager.
+func NewDManager(path string) (*DManager, error) {
 	// Проверка наличия файла для создания контейнера
 	_, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("file not found for up container %w", err)
+		return nil, fmt.Errorf("file not found for up docker container %w", err)
 	}
 
+	// Определяем типы команд, которые будем вызывать в методах.
+	dCommander, err := choiseCommander(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DManager{
+		Path:       path,
+		DCommander: dCommander,
+	}, nil
+}
+
+func choiseCommander(path string) (DockerCommander, error) {
 	pathArr := strings.Split(path, "/")
-	if len(pathArr) == 0 {
-		return fmt.Errorf("path is not defined for up container")
-	}
-
 	nameFile := pathArr[len(pathArr)-1]
 
 	switch nameFile {
 	case "docker-compose.yml":
-		if d, ok := d.commands["docker compose"]; ok {
-			err := d.Up(ctx, path)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
+		// Name of Image
+		nameImage := "postgres:16-alpine"
+		return NewComposeFile(nameImage, path), nil
 
 	case "Dockerfile":
-		// TODO. Нет логики.
-		return nil
+		// Name of Image
+		nameImage := "d_postgres"
+		return NewDockerFile(nameImage, path), nil
+
 	default:
-		return fmt.Errorf("name of file is not valid %s", nameFile)
+		return nil, fmt.Errorf("docker file is %s. It is not defined ", nameFile)
 	}
-	return nil
 }
+
+func (d *DManager) Up(ctx context.Context) (string, error) {
+	err := d.DCommander.Up(ctx)
+	if err != nil {
+		return "", err
+	}
+	return d.DCommander.GetID(ctx)
+}
+
+func (d *DManager) Status(ctx context.Context) (string, error) {
+	return d.DCommander.GetStatus(ctx)
+}
+
+func (d *DManager) Down(ctx context.Context) (string, error) {
+	d.DCommander.Down(ctx)
+}
+
+// TODO
+// Проверка запущен ли контейнер уже, если да, его надо остановить и перезапустить
+// или настроить логику свою...
+
+// Если контейнер уже создан и мы его пересоздаем, ошибки нет, но контейнер остается со старой версией

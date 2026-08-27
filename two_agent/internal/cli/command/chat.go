@@ -39,7 +39,7 @@ func (c *Chat) Processing(ctx context.Context, command string) error {
 }
 
 func (c *Chat) AddTool(tool tools.Toolmaker) {
-	c.Tools[tool.CallCommand()] = tool
+	c.Tools[tool.GetCommand()] = tool
 }
 
 func (c *Chat) split(line string) []string {

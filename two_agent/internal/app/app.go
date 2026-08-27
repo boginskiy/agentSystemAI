@@ -17,6 +17,7 @@ type App struct {
 	Cfg       config.Config
 	Logg      logger.Logger
 	Commander cli.Commander
+	Formater  cli.Formater
 	Chatterer *command.Chat
 }
 
@@ -39,6 +40,7 @@ func (a *App) initModules(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
 		a.initLogger,
+		a.initFormater,
 		a.initChat,
 		a.initCommander,
 	}
@@ -52,12 +54,16 @@ func (a *App) initModules(ctx context.Context) error {
 	return nil
 }
 
+func (a *App) initFormater(ctx context.Context) error {
+	a.Formater = output.NewFormat()
+	return nil
+}
+
 func (a *App) initCommander(ctx context.Context) error {
-	formater := output.NewFormat()
 	printer := output.NewOutput()
 	scanner := input.NewScanner(os.Stdin)
 
-	a.Commander = command.NewRoot(printer, formater, scanner, a.Chatterer)
+	a.Commander = command.NewRoot(printer, a.Formater, scanner, a.Chatterer)
 	return nil
 }
 
@@ -65,9 +71,10 @@ func (a *App) initChat(ctx context.Context) error {
 	chatterer := command.NewChat()
 
 	// Tools
-	createrContainer := container.NewContainer("/create container")
-
-	chatterer.AddTool(createrContainer)
+	createrContainer, err := container.NewContainer("/create container", a.Formater)
+	if err == nil {
+		chatterer.AddTool(createrContainer)
+	}
 
 	a.Chatterer = chatterer
 	return nil

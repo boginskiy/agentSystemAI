@@ -1,0 +1,5 @@
+{
+  "model": "qwen3-8b-8k",
+  "messages": [{"role": "user", "content": "Какое сейчас время в Москве?"}],
+  "stream": false
+}

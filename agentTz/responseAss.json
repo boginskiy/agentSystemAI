@@ -1,0 +1,21 @@
+{
+  "id": "chatcmpl-303",
+  "object": "chat.completion",
+  "created": 1792675334,
+  "model": "qwen3-8b-8k",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "В данный момент в Москве 16:45 (по московскому времени, МСК)."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 23,
+    "completion_tokens": 25,
+    "total_tokens": 48
+  }
+}

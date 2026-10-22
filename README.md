@@ -82,3 +82,27 @@ your-ai-agent/
 ├── go.sum
 ├── Makefile                      # Автоматизация сборки
 └── README.md
+
+
+### Библиотеки
+1) Protocol-Lattice/go-agent
+2) google/adk-go
+
+
+### Настройка Modelfile
+FROM qwen3:8b
+PARAMETER num_ctx 8192
+PARAMETER num_thread 6
+
+
+### Сборка модели 
+ollama create qwen3-8b-8k -f Modelfile
+
+
+### Проверочный запрос
+curl http://localhost:11434/api/chat -d '{
+  "model": "qwen3:8b",
+  "messages": [{"role": "user", "content": "Привет! Ты готова к работе?"}],
+  "think": false,
+  "stream": false
+}'
